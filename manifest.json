@@ -1,0 +1,118 @@
+{
+  "name": "captk-feature-extraction",
+  "label": "CaPTk - Feature extraction",
+  "description": "This package provides a tool for extracting radiomic features. Assumes input images are co-registered and normalized",
+  "author": "CBICA",
+  "maintainer": "D3b-TIRU <flywheel@d3b.center>",
+  "source": "https://github.com/d3b-center/fw-captk-feature-extraction", 
+  "url": "https://cbica.github.io/CaPTk/ht_FeatureExtraction.html",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "custom": {
+    "gear-builder": {
+      "category": "analysis",
+      "image": "chop.flywheel.io/captk-feature-extraction:0.0.0"
+    },
+    "flywheel": {
+      "suite": "CaPTk"
+    }
+  },
+  "inputs": {
+    "Tumor-segmentation-mask": {
+      "base": "file",
+      "description": "Binary region of interest mask.",
+      "optional": false,
+      "type": {
+        "enum": [
+          "nifti"
+        ]
+      }
+    },
+    "T1": {
+      "base": "file",
+      "description": "T1-weighted image.",
+      "optional": true,
+      "type": {
+        "enum": [
+          "nifti"
+        ]
+      }
+    },
+    "T1CE": {
+      "base": "file",
+      "description": "T1-weighted contrast-enhanced image.",
+      "optional": true,
+      "type": {
+        "enum": [
+          "nifti"
+        ]
+      }
+    },
+    "T2": {
+      "base": "file",
+      "description": "T2-weighted image.",
+      "optional": true,
+      "type": {
+        "enum": [
+          "nifti"
+        ]
+      }
+    },
+    "FLAIR": {
+      "base": "file",
+      "description": "FLAIR image.",
+      "optional": true,
+      "type": {
+        "enum": [
+          "nifti"
+        ]
+      }
+    },
+    "diffusion-ADC": {
+      "base": "file",
+      "description": "Diffusion ADC image.",
+      "optional": true,
+      "type": {
+        "enum": [
+          "nifti"
+        ]
+      }
+    },
+    "feature-definition-file": {
+      "base": "file",
+      "description": "Parameter configuration file. If none specified, will use CaPTk default 3D image parameters",
+      "optional": true,
+      "type": {
+        "enum": [
+          "csv"
+        ]
+      }
+    }
+  },
+  "config": {
+    "subject_label": {
+      "description": "Subject label to include in output file.",
+      "type": "string",
+      "default":"subject"
+    },
+    "output_file_name": {
+      "description": "File name for output feature file (defaults to radiomic_features.csv).",
+      "type": "string",
+      "default":"radiomic_features.csv"
+    }
+  },
+  "environment":{
+    "CAPTK_VERSION":"1.8.1",
+    "HOME":"/root",
+    "HOSTNAME":"0b633f948575",
+    "LD_LIBRARY_PATH":"/opt/captk/1.8.1/usr/",
+    "MESA_GL_VERSION_OVERRIDE":"3.2",
+    "OLDPWD":"/opt/captk/1.8.1/usr",
+    "PATH":"/opt/captk/1.8.1/usr:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "PWD":"/opt/captk/1.8.1/usr",
+    "QT_GRAPHICSSYSTEM":"native",
+    "QT_X11_NO_MITSHM":"1",
+    "SHLVL":"1",
+    "TERM":"xterm"
+  }
+}

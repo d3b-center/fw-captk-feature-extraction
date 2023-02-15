@@ -1,0 +1,162 @@
+#!/bin/bash
+#
+#	template based on:  https://github.com/scitran-apps/fsl-bet/blob/master/run
+#
+
+CONTAINER="[captk-feature-extraction]"
+echo -e "$CONTAINER  Initiated"
+
+###############################################################################
+## Built to flywheel-v0 spec.
+FLYWHEEL_BASE=/flywheel/v0
+OUTPUT_DIR=$FLYWHEEL_BASE/output
+t1_DIR=$FLYWHEEL_BASE/input/T1
+t1ce_DIR=$FLYWHEEL_BASE/input/T1CE
+t2_DIR=$FLYWHEEL_BASE/input/T2
+fl_DIR=$FLYWHEEL_BASE/input/FLAIR
+adc_DIR=$FLYWHEEL_BASE/input/diffusion-ADC
+seg_DIR=$FLYWHEEL_BASE/input/Tumor-segmentation-mask
+feat_DIR=$FLYWHEEL_BASE/input/feature-definition-file
+MANIFEST=$FLYWHEEL_BASE/manifest.json
+CONFIG_FILE=$FLYWHEEL_BASE/config.json
+
+###############################################################################
+## Configure the ENV
+export USER=Flywheel
+
+###############################################################################
+## Execute the main processes
+function jsonValue() {
+KEY=$1
+num=$2
+awk -F"[,:}]" '{for(i=1;i<=NF;i++){if($i~/'$KEY'\042/){print $(i+1)}}}' | tr -d '"' | sed -n ${num}p
+}
+
+## get all user configurations
+if [[ -f $CONFIG_FILE ]]; then
+  echo "$CONTAINER  $CONFIG_FILE found. Loading config..."
+
+  sub_id="$(cat $CONFIG_FILE | jsonValue subject_label)"
+  output_fn="$(cat $CONFIG_FILE | jsonValue output_file_name)"
+
+else
+  echo "$CONTAINER  $CONFIG_FILE not found. Loading defaults from $MANIFEST..."
+
+  sub_id="$(cat $MANIFEST | jsonValue subject_label default)"
+  output_fn="$(cat $MANIFEST | jsonValue output_file_name default)"
+
+fi
+
+## Find the input files
+echo "$CONTAINER  Loading input files..."
+seg_file=$(find $seg_DIR/* -maxdepth 0 -type f -name "*.nii*")
+# optional inputs
+if [[ -d $t1_DIR ]] ; then
+  t1_file=$(find $t1_DIR/* -maxdepth 0 -type f -name "*.nii*")
+fi
+if [[ -d $t1ce_DIR ]] ; then
+  t1ce_file=$(find $t1ce_DIR/* -maxdepth 0 -type f -name "*.nii*")
+fi
+if [[ -d $t2_DIR ]] ; then
+  t2_file=$(find $t2_DIR/* -maxdepth 0 -type f -name "*.nii*")
+fi
+if [[ -d $fl_DIR ]] ; then
+  fl_file=$(find $fl_DIR/* -maxdepth 0 -type f -name "*.nii*")
+fi
+if [[ -d $adc_DIR ]] ; then
+  adc_file=$(find $adc_DIR/* -maxdepth 0 -type f -name "*.nii*")
+fi
+if [[ -d $feat_DIR ]] ; then
+  feat_file=$(find $feat_DIR/* -maxdepth 0 -type f -name "*.csv*")
+fi
+
+
+## Define command options based on input files
+if [[ -f $t1_file ]] ; then
+    im_type_flag='T1'
+    im_fname=$t1_file
+fi
+
+if [[ -f $t1ce_file ]] ; then
+  if [[ -z "$im_type_flag" ]] ; then
+    im_type_flag='T1Gd'
+    im_fname=$t1ce_file
+  else
+    im_type_flag=$im_type_flag',T1gd'
+    im_fname=$im_fname','$t1ce_file
+  fi
+fi
+
+if [[ -f $t2_file ]] ; then
+  if [[ -z "$im_type_flag" ]] ; then
+    im_type_flag='T2'
+    im_fname=$t2_file
+  else
+    im_type_flag=$im_type_flag',T2'
+    im_fname=$im_fname','$t2_file
+  fi
+fi
+
+if [[ -f $fl_file ]] ; then
+  if [[ -z "$im_type_flag" ]] ; then
+    im_type_flag='FLAIR'
+    im_fname=$fl_file
+  else
+    im_type_flag=$im_type_flag',FLAIR'
+    im_fname=$im_fname','$fl_file
+  fi
+fi
+
+if [[ -f $adc_file ]] ; then
+  if [[ -z "$im_type_flag" ]] ; then
+    im_type_flag='DWI'
+    im_fname=$adc_file
+  else
+    im_type_flag=$im_type_flag',DWI'
+    im_fname=$im_fname','$adc_file
+  fi
+fi
+
+## define feature parameter file
+# if user input a file use that, otherwise use CaPTk default
+if [[ ! -f $feat_file ]] ; then
+  feat_file=/opt/captk/1.8.1/usr/data/features/1_params_default.csv
+fi
+
+## update output file name if user-defined
+out_path="output/"
+out_path+=$output_fn
+out_path="$(echo -e "${out_path}" | tr -d '[:space:]')"
+
+## If necessary input files are found, run the thing
+if [[ ! -z $im_fname ]] ; then
+
+  CaPTk_dir=/opt/captk/1.8.1/usr # path to install (in Docker container)
+
+  echo "$CONTAINER  Running CaPTk Feature Extraction"
+  ${CaPTk_dir}/bin/FeatureExtraction \
+    -n "${sub_id}" \
+    -i "${im_fname}" \
+    -t "${im_type_flag}" \
+    -m "${seg_file}" \
+    -r 1 \
+    -l "tumor_core" \
+    -p "${feat_file}" \
+    -o "${out_path}"
+
+################# Finish up #################
+  STATUS=$?
+else
+  echo "$CONTAINER  Input files not found!"
+  exit 1
+fi
+
+# Check exit status
+if [[ $STATUS == 0 ]] ; then
+    echo -e "$CONTAINER  Done!"
+  else
+    echo "$CONTAINER  command returned a non-zero exit code = [$STATUS]."
+    exit 1
+fi
+
+exit 0
