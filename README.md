@@ -1,6 +1,6 @@
 # CaPTk radiomic feature extraction
 
-Flywheel gear that implements CaPTk's application for [radiomic feature extraction](https://cbica.github.io/CaPTk/ht_FeatureExtraction.html).
+Flywheel gear that implements CaPTk's application for single-subject [radiomic feature extraction](https://cbica.github.io/CaPTk/ht_FeatureExtraction.html). Gear will output a CSV file with the subject's radiomic features within the tumor mask, for all of the input scans.
 
 NOTE: input images must be co-registered & normalized.
 
