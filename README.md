@@ -16,7 +16,7 @@ NOTE: input images must be co-registered & normalized.
 - T2
 - FLAIR
 - ADC
-- Radiomic feature parameter file (by default uses CaPTk's 3D parameters)
+- Radiomic feature parameter file (if not specified, gear will use CaPTk's default 3D parameters)
 
 ## Optional configuration:
 - subject label to use in the output file
