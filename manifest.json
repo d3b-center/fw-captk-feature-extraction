@@ -6,12 +6,12 @@
   "maintainer": "D3b-TIRU <flywheel@d3b.center>",
   "source": "https://github.com/d3b-center/fw-captk-feature-extraction", 
   "url": "https://cbica.github.io/CaPTk/ht_FeatureExtraction.html",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "license": "Apache-2.0",
   "custom": {
     "gear-builder": {
       "category": "analysis",
-      "image": "chop.flywheel.io/captk-feature-extraction:0.0.3"
+      "image": "chop.flywheel.io/captk-feature-extraction:0.0.4"
     },
     "flywheel": {
       "suite": "CaPTk"
