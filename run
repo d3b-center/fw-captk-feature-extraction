@@ -133,6 +133,9 @@ if [[ ! -z $im_fname ]] ; then
 
   CaPTk_dir=/opt/captk/1.8.1/usr # path to install (in Docker container)
 
+  echo "$CONTAINER  Binarizing ROI file"
+  Utilities -i "${seg_file}" -o "${seg_file}" -cm
+
   echo "$CONTAINER  Running CaPTk Feature Extraction"
   ${CaPTk_dir}/bin/FeatureExtraction \
     -n "${sub_id}" \
