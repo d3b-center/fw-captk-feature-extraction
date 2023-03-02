@@ -149,7 +149,7 @@ if [[ ! -z $im_fname ]] ; then
     -o "${out_path}"
 
 ################# Finish up #################
-  if find "${out_path}" -prune -type d -empty | grep -q '^'; then # check if output dir is empty
+  if [[ ! -f $out_path ]] ; then # if output file is not found
     echo "$CONTAINER  No output files!"
     exit 1
   else # if output file exists:
