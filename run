@@ -6,6 +6,9 @@
 CONTAINER="[captk-feature-extraction]"
 echo -e "$CONTAINER  Initiated"
 
+export LC_ALL=C.UTF-8
+export LANG=C.UTF-8
+
 ###############################################################################
 ## Built to flywheel-v0 spec.
 FLYWHEEL_BASE=/flywheel/v0
