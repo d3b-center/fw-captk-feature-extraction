@@ -124,8 +124,10 @@ fi
 # if user input a file use that, otherwise use CaPTk default
 if [[ ! -f $feat_file ]] ; then
   # feat_file=/opt/captk/1.8.1/usr/data/features/1_params_default.csv
-  feat_file=radiomic_feature_params_2023.csv
+  feat_file=radiomic_feature_params_20230725.csv
 fi
+echo "$CONTAINER  Using feature parameter file: $feat_file."
+
 
 ## update output file name if user-defined
 out_path="output/"
