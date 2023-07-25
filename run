@@ -132,7 +132,7 @@ echo "$CONTAINER  Using feature parameter file: $feat_file."
 ## update output file name if user-defined
 out_path="output/"
 out_path+=$output_fn
-out_path="$(echo -e "${out_path}" | tr -d '[:space:]')"
+out_path="$(echo -e "${out_path}" | tr -d '[:space:]')" # remove spaces
 
 ## If necessary input files are found, run the thing
 if [[ ! -z $im_fname ]] ; then
@@ -140,14 +140,15 @@ if [[ ! -z $im_fname ]] ; then
   CaPTk_dir=/opt/captk/1.8.1/usr # path to install (in Docker container)
 
   echo "$CONTAINER  Binarizing ROI file"
-  ${CaPTk_dir}/bin/Utilities -i "${seg_file}" -o "${seg_file}" -cm
+  bin_roi_fn="bin_roi.nii.gz"
+  ${CaPTk_dir}/bin/Utilities -i "${seg_file}" -o "${bin_roi_fn}" -cm
 
   echo "$CONTAINER  Running CaPTk Feature Extraction"
   ${CaPTk_dir}/bin/FeatureExtraction \
     -n "${sub_id}" \
     -i "${im_fname}" \
     -t "${im_type_flag}" \
-    -m "${seg_file}" \
+    -m "${bin_roi_fn}" \
     -r 1 \
     -l "tumor_core" \
     -p "${feat_file}" \
