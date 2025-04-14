@@ -8,7 +8,7 @@ NOTE: input images must be co-registered & normalized.
 - CaPTk (gear uses the existing Docker container 2021.03.29)
 
 ## Required inputs:
-- Tumor segmentation mask (binary)
+- Tumor segmentation mask (gear automatically binarizes input mask - all non-zero voxels become 1)
 
 ## Optional inputs:
 - T1
