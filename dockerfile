@@ -9,6 +9,17 @@
 FROM cbica/captk:2021.03.29
 LABEL authors="CBICA_UPenn <software@cbica.upenn.edu>"
 
+# # # install required Python packages
+# # FROM python:3.9.7-slim-buster
+# RUN sudo apt update
+# RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
+
+# RUN apt-get install -y python3-pip
+# # RUN pip install -r requirements.txt
+# RUN set -ex \
+#     && apt-get update && apt-get install -y ca-certificates build-essential git --no-install-recommends \
+#     && git clone -b v1.26.1 https://github.com/numpy/numpy.git 
+
 #############################################
 # Setup default flywheel/v0 directory
 ENV FLYWHEEL=/flywheel/v0

@@ -18,6 +18,7 @@ t1ce_DIR=$FLYWHEEL_BASE/input/T1CE
 t2_DIR=$FLYWHEEL_BASE/input/T2
 fl_DIR=$FLYWHEEL_BASE/input/FLAIR
 adc_DIR=$FLYWHEEL_BASE/input/diffusion-ADC
+brain_mask_DIR=$FLYWHEEL_BASE/input/brain-mask
 seg_DIR=$FLYWHEEL_BASE/input/Tumor-segmentation-mask
 feat_DIR=$FLYWHEEL_BASE/input/feature-definition-file
 MANIFEST=$FLYWHEEL_BASE/manifest.json
@@ -42,13 +43,34 @@ if [[ -f $CONFIG_FILE ]]; then
   sub_id="$(cat $CONFIG_FILE | jsonValue subject_label)"
   output_fn="$(cat $CONFIG_FILE | jsonValue output_file_name)"
 
+  # whether to perform normalization
+  norm_flag_bool="$(cat $CONFIG_FILE | jsonValue perform_normalization)"
+  if [[ $norm_flag_bool == 'true' ]]; then
+    norm_flag=1
+  elif [[ $norm_flag_bool == 'false' ]]; then
+    norm_flag=0
+  fi
+
+  # whether to use tumor seg + brain mask during normalization
+  seg_flag_bool="$(cat $CONFIG_FILE | jsonValue use_mask_union)"
+  if [[ $seg_flag_bool == 'true' ]]; then
+    seg_flag=1
+  elif [[ $seg_flag_bool == 'false' ]]; then
+    seg_flag=0
+  fi
+
+
 else
   echo "$CONTAINER  $CONFIG_FILE not found. Loading defaults from $MANIFEST..."
 
   sub_id="$(cat $MANIFEST | jsonValue subject_label default)"
   output_fn="$(cat $MANIFEST | jsonValue output_file_name default)"
+  norm_flag=0
+  seg_flag=0
 
 fi
+
+echo "normalization flag: $norm_flag"
 
 ## Find the input files
 echo "$CONTAINER  Loading input files..."
@@ -68,6 +90,9 @@ if [[ -d $fl_DIR ]] ; then
 fi
 if [[ -d $adc_DIR ]] ; then
   adc_file=$(find $adc_DIR/* -maxdepth 0 -type f -name "*.nii*")
+fi
+if [[ -d $brain_mask_DIR ]] ; then
+  brain_mask_file=$(find $brain_mask_DIR/* -maxdepth 0 -type f -name "*.nii*")
 fi
 if [[ -d $feat_DIR ]] ; then
   feat_file=$(find $feat_DIR/* -maxdepth 0 -type f -name "*.csv*")
@@ -137,13 +162,65 @@ out_path="$(echo -e "${out_path}" | tr -d '[:space:]')" # remove spaces
 ## If necessary input files are found, run the thing
 if [[ ! -z $im_fname ]] ; then
 
-  CaPTk_dir=/opt/captk/1.8.1/usr # path to install (in Docker container)
+  CaPTk_dir=/opt/captk/1.8.1/usr # path to installation (in Docker container)
 
   echo "$CONTAINER  Binarizing ROI file"
   bin_roi_fn="bin_roi.nii.gz"
   ${CaPTk_dir}/bin/Utilities -i "${seg_file}" -o "${bin_roi_fn}" -cm
 
+  # =========================== perform normalization if specified ===========================
+  if [[ $norm_flag == 1 ]]; then
+    echo "$CONTAINER Beginning normalization..."
+    # binarize brain mask just in case
+    if [[ ! -f $brain_mask_file ]] ; then
+      echo "$CONTAINER ERROR: Normalization selected but no brain mask input file found!"
+      exit 1
+    else
+      bin_fn="bin_brain_mask.nii.gz"
+      ${CaPTk_dir}/bin/Utilities -i "${brain_mask_file}" -o "${bin_fn}" -cm
+    fi
+
+    # take union of tumor segmentation & brain mask if user specified, otherwise use just the original brain mask
+    if [[ $seg_flag == 1 ]]; then
+      # combine the two files into one
+      python3 combine_segmentations.py ${bin_roi_fn} ${bin_fn} 'output/combined_segmentation.nii.gz'
+      brain_mask_2_use='output/combined_segmentation.nii.gz'
+      echo "$CONTAINER Using combined masks for normalization"
+    else
+      echo "$CONTAINER Using input brain tumor mask for normalization"
+      brain_mask_2_use=${bin_fn}
+    fi
+
+    # now run normalization on input files if T1/T1CE/T2/FLAIR
+    temp_im_fname=${im_fname}
+    im_fname=
+    IFS=',' read -ra im_type_array <<< "$im_type_flag" # get an array of the image types
+    ind=0
+    for im in ${temp_im_fname//,/ } ; do
+      # skip if DWI
+      if [[ ${im_type_array[ind]} != 'DWI' ]]; then
+        
+        # get base file name
+        base=$(basename "${im}" .nii.gz) # assumes ends in '.nii.gz' not '.nii'
+
+        # apply brain mask
+        python3 apply_mask.py ${brain_mask_2_use} ${im} ${base}_ss.nii.gz
+
+        # normalize the image
+        python3 normalize_images.py ${base}_ss.nii.gz output/${base}_ss_norm.nii.gz
+
+        # update list of images
+        im_fname=$im_fname',output/'${base}_ss_norm.nii.gz
+        echo "$CONTAINER Normalization complete, output: ${base}_ss_norm.nii.gz"
+      fi
+      ind=$(( ${ind} + 1 ))
+    done
+  fi
+
+
+  # =========================== run feature extraction =======================================
   echo "$CONTAINER  Running CaPTk Feature Extraction"
+  echo "$CONTAINER             input files: ${im_fname}"
   ${CaPTk_dir}/bin/FeatureExtraction \
     -n "${sub_id}" \
     -i "${im_fname}" \

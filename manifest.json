@@ -6,12 +6,12 @@
   "maintainer": "D3b-TIRU <flywheel@d3b.center>",
   "source": "https://github.com/d3b-center/fw-captk-feature-extraction", 
   "url": "https://cbica.github.io/CaPTk/ht_FeatureExtraction.html",
-  "version": "0.0.7",
+  "version": "0.1.1",
   "license": "Apache-2.0",
   "custom": {
     "gear-builder": {
       "category": "analysis",
-      "image": "chop.flywheel.io/captk-feature-extraction:0.0.7"
+      "image": "chop.flywheel.io/captk-feature-extraction:0.1.1"
     },
     "flywheel": {
       "suite": "CaPTk"
@@ -78,6 +78,16 @@
         ]
       }
     },
+    "brain-mask": {
+      "base": "file",
+      "description": "Binary brain mask (only needed for normalization).",
+      "optional": true,
+      "type": {
+        "enum": [
+          "nifti"
+        ]
+      }
+    },
     "feature-definition-file": {
       "base": "file",
       "description": "Parameter configuration file. If none specified, will use CaPTk default 3D image parameters",
@@ -94,6 +104,16 @@
       "description": "Subject label to include in output file.",
       "type": "string",
       "default":"subject"
+    },
+    "perform_normalization": {
+      "description": "Normalize the input images to range 0-255 (will only perform on T1/T2/T1CE/FL inputs).",
+      "type": "boolean",
+      "default":false
+    },
+    "use_mask_union": {
+      "description": "Use the union of the tumor segmentation and brain mask files during normalization step.",
+      "type": "boolean",
+      "default":false
     },
     "output_file_name": {
       "description": "File name for output feature file (defaults to radiomic_features.csv).",
