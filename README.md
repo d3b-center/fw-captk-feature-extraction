@@ -10,7 +10,7 @@ Normalization (to range 0-255) is an optional step.
 - CaPTk (gear uses the existing Docker container 2021.03.29)
 
 ## Required inputs:
-- Tumor segmentation mask (binary)
+- Tumor segmentation mask (gear automatically binarizes input mask - all non-zero voxels become 1)
 
 ## Optional inputs:
 - T1
